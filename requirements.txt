@@ -1,0 +1,38 @@
+# ──────────────────────────────────────────────
+# VoiceGPT — Local Python Dependencies
+# ──────────────────────────────────────────────
+
+# ── Web Framework ─────────────────────────────
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+websockets==13.1
+
+# ── Async DB / Memory (Local Overrides) ───────
+sqlalchemy[asyncio]==2.0.36
+aiosqlite
+fakeredis
+
+# ── Auth / Security ───────────────────────────
+python-jose[cryptography]==3.3.0
+passlib==1.7.4
+bcrypt<4.0.0
+
+# ── Settings ──────────────────────────────────
+pydantic==2.10.3
+pydantic-settings==2.6.1
+pydantic[email]==2.10.3
+
+# ── OpenAI / LLM & RAG Vector ─────────────────
+openai==1.57.4
+faiss-cpu==1.9.0
+sentence-transformers==3.3.1
+
+# ── Audio Processing (Lightweight) ────────────
+soundfile==0.12.1
+librosa==0.10.2.post1
+numpy==1.26.4
+
+# ── Logging & Utilities ───────────────────────
+structlog==24.4.0
+httpx==0.28.1

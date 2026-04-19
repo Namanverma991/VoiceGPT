@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+env/
+.venv/
+.env.local
+*.env
+
+# Node
+node_modules/
+dist/
+.next/
+.nuxt/
+.cache/
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+.dockerignore
+
+# Logs
+logs/
+*.log
+
+# AI Models (large files)
+ai_models/whisper/*.pt
+ai_models/tts/
+
+# Database
+*.sqlite3
+*.db
+postgres_data/
+redis_data/
+
+# Secrets / Keys
+*.pem
+*.key
+*.cert
+*.pfx
+secret_key*
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# OS
+.DS_Store
+Thumbs.db

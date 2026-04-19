@@ -1,0 +1,105 @@
+---
+# ── VoiceGPT Backend — Kubernetes Deployment + Service ──
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voicegpt-backend
+  labels:
+    app: voicegpt
+    component: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: voicegpt
+      component: backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: voicegpt
+        component: backend
+    spec:
+      containers:
+        - name: backend
+          image: voicegpt/backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - secretRef:
+                name: voicegpt-secrets
+            - configMapRef:
+                name: voicegpt-config
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+          volumeMounts:
+            - name: ai-models
+              mountPath: /app/ai_models
+            - name: app-data
+              mountPath: /app/data
+            - name: logs
+              mountPath: /app/logs
+      volumes:
+        - name: ai-models
+          persistentVolumeClaim:
+            claimName: ai-models-pvc
+        - name: app-data
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voicegpt-backend
+  labels:
+    app: voicegpt
+    component: backend
+spec:
+  selector:
+    app: voicegpt
+    component: backend
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+
+---
+# ── Persistent Volume for AI models ──
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ai-models-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

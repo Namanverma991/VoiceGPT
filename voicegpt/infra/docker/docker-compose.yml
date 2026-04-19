@@ -1,0 +1,146 @@
+# ======================================================
+# VoiceGPT — Docker Compose (Local Development)
+# ======================================================
+# Usage:
+#   docker-compose up --build
+#   docker-compose down -v   (wipe volumes)
+
+version: "3.9"
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: voicegpt_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-voicegpt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voicegpt_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-voicegpt}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../database/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-voicegpt}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ─────────────────────────────────────────
+  redis:
+    build:
+      context: .
+      dockerfile: redis.Dockerfile
+    container_name: voicegpt_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend API ────────────────────────────────────
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: ../infra/docker/backend.Dockerfile
+    container_name: voicegpt_backend
+    restart: unless-stopped
+    env_file:
+      - ../../backend/.env
+    environment:
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../backend:/app
+      - ai_models:/app/ai_models
+      - tts_data:/app/data
+      - logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 3
+
+  # ── Celery Worker ──────────────────────────────────
+  celery_worker:
+    build:
+      context: ../../backend
+      dockerfile: ../infra/docker/backend.Dockerfile
+    container_name: voicegpt_celery
+    restart: unless-stopped
+    env_file:
+      - ../../backend/.env
+    environment:
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis
+    command: celery -A app.workers.tasks.celery_app worker --loglevel=info --concurrency=2
+    volumes:
+      - ../../backend:/app
+      - ai_models:/app/ai_models
+      - tts_data:/app/data
+    depends_on:
+      - redis
+      - postgres
+
+  # ── Celery Flower Monitor ──────────────────────────
+  flower:
+    build:
+      context: ../../backend
+      dockerfile: ../infra/docker/backend.Dockerfile
+    container_name: voicegpt_flower
+    restart: unless-stopped
+    env_file:
+      - ../../backend/.env
+    command: celery -A app.workers.tasks.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+
+  # ── Frontend ───────────────────────────────────────
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: ../infra/docker/frontend.Dockerfile
+    container_name: voicegpt_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  # ── Nginx Reverse Proxy ────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: voicegpt_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  postgres_data:
+  redis_data:
+  ai_models:
+  tts_data:
+  logs:

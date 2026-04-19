@@ -1,0 +1,62 @@
+# ──────────────────────────────────────────────
+# VoiceGPT Backend — Python Dependencies
+# ──────────────────────────────────────────────
+
+# ── Web Framework ─────────────────────────────
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+websockets==13.1
+
+# ── Async DB ──────────────────────────────────
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+psycopg2-binary==2.9.10
+alembic==1.14.0
+
+# ── Redis ─────────────────────────────────────
+redis[hiredis]==5.2.1
+
+# ── Auth / Security ───────────────────────────
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# ── Settings ──────────────────────────────────
+pydantic==2.10.3
+pydantic-settings==2.6.1
+pydantic[email]==2.10.3
+
+# ── OpenAI / LLM ─────────────────────────────
+openai==1.57.4
+
+# ── STT — Whisper ─────────────────────────────
+openai-whisper==20240930
+soundfile==0.12.1
+librosa==0.10.2.post1
+numpy==1.26.4
+
+# ── TTS — Coqui ───────────────────────────────
+TTS==0.22.0
+torch==2.5.1
+torchaudio==2.5.1
+
+# ── Vector DB — FAISS ─────────────────────────
+faiss-cpu==1.9.0
+sentence-transformers==3.3.1
+
+# ── Background Workers ────────────────────────
+celery[redis]==5.4.0
+flower==2.0.1
+
+# ── Logging ───────────────────────────────────
+structlog==24.4.0
+
+# ── HTTP Client ──────────────────────────────
+httpx==0.28.1
+
+# ── Dev / Testing ─────────────────────────────
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+httpx==0.28.1
+faker==33.1.0

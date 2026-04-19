@@ -1,0 +1,95 @@
+---
+# ── Nginx Ingress Controller ──
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: voicegpt-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "30m"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # WebSocket support
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+    # Uncomment for TLS:
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  # tls:
+  #   - hosts:
+  #       - voicegpt.yourdomain.com
+  #     secretName: voicegpt-tls
+  rules:
+    - host: voicegpt.yourdomain.com   # ← change to your domain
+      http:
+        paths:
+          # API
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: voicegpt-backend
+                port:
+                  number: 8000
+          # WebSocket
+          - path: /ws/
+            pathType: Prefix
+            backend:
+              service:
+                name: voicegpt-backend
+                port:
+                  number: 8000
+          # API Docs
+          - path: /(docs|redoc|openapi.json)
+            pathType: Prefix
+            backend:
+              service:
+                name: voicegpt-backend
+                port:
+                  number: 8000
+          # Frontend (catch-all)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: voicegpt-frontend
+                port:
+                  number: 80
+
+---
+# ── Secrets (base64-encoded values — use kubectl create secret) ──
+# Example:
+#   kubectl create secret generic voicegpt-secrets \
+#     --from-literal=OPENAI_API_KEY=sk-xxx \
+#     --from-literal=JWT_SECRET_KEY=your-secret \
+#     --from-literal=POSTGRES_PASSWORD=your-pg-password
+apiVersion: v1
+kind: Secret
+metadata:
+  name: voicegpt-secrets
+type: Opaque
+stringData:
+  OPENAI_API_KEY: "sk-your-api-key-here"
+  JWT_SECRET_KEY: "change-me-to-a-very-long-random-secret"
+  POSTGRES_PASSWORD: "voicegpt_secret"
+
+---
+# ── ConfigMap ──
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: voicegpt-config
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  POSTGRES_HOST: "postgres"
+  POSTGRES_USER: "voicegpt"
+  POSTGRES_DB: "voicegpt"
+  REDIS_HOST: "redis"
+  WHISPER_MODEL: "base"
+  WHISPER_DEVICE: "cpu"
+  TTS_MODEL: "tts_models/en/ljspeech/tacotron2-DDC"
+  TTS_LANGUAGE: "en"

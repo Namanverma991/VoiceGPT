@@ -1,0 +1,29 @@
+HOW TO RUN VOICEGPT
+===================
+
+This project has two main parts:
+1. The FastAPI Backend (Python)
+2. The React Frontend (Node.js/Vite)
+
+To run the project, simply double-click the `run.bat` file in this directory. 
+It will automatically open two terminal windows:
+- One will load your Python environment and start the Backend on Port 8000.
+- The other will start the Node.js Frontend on Port 5173.
+
+Once both are running, open your browser and go to:
+http://localhost:5173
+
+TROUBLESHOOTING
+---------------
+If the `run.bat` script fails for any reason, you can start the services manually from the command line:
+
+1) Start Backend (Terminal 1)
+   -> cd backend
+   -> .\.venv\Scripts\activate
+   -> uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+2) Start Frontend (Terminal 2)
+   -> cd frontend
+   -> npm run dev
+
+Note: You can add or modify your OpenAI API Key inside `backend/.env`.

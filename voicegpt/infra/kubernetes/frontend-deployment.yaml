@@ -1,0 +1,70 @@
+---
+# ── VoiceGPT Frontend — Kubernetes Deployment + Service ──
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voicegpt-frontend
+  labels:
+    app: voicegpt
+    component: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: voicegpt
+      component: frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: voicegpt
+        component: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: voicegpt/frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voicegpt-frontend
+  labels:
+    app: voicegpt
+    component: frontend
+spec:
+  selector:
+    app: voicegpt
+    component: frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  type: ClusterIP
